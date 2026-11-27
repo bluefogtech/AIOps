@@ -1,0 +1,32 @@
+# Example OpenTelemetry Collector config for this repo.
+#
+# Receives metrics from metrics.py over OTLP/HTTP and writes each batch as a
+# line of OTLP JSON to otel_metrics.json, which otel-2-chromadb.py reads.
+# Needs the contrib distribution (otel/opentelemetry-collector-contrib), which
+# includes the file exporter. See README.md for how to run it.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        # 0.0.0.0 so the port is reachable from outside the Docker container.
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  file:
+    # /data is the repo folder mounted into the container (see README.md).
+    # When running the otelcol-contrib binary directly, use ./otel_metrics.json.
+    path: /data/otel_metrics.json
+  debug:
+    # Logs a short line per batch so you can see metrics arriving.
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [file, debug]
